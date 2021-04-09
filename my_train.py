@@ -4,8 +4,6 @@ from lib.train import train
 
 
 
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Little Ma's train")
     parser.add_argument('--batch_size_train', type=int, default=20, help='input batch size for training (default: 160)')

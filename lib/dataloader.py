@@ -7,7 +7,6 @@ import random
 import numpy as np
 import torch.nn.functional as F
 
-
 class ToTensor(object):
     """Convert a ``PIL Image`` or ``numpy.ndarray`` to tensor.
 
@@ -27,7 +26,6 @@ class ToTensor(object):
 
     def __repr__(self):
         return self.__class__.__name__ + '()'
-
 
 class getcolor():
     def __init__(self):
