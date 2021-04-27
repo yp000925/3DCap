@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from models.capsule_layer import CapsuleLayer
 import models.nn_
+import numpy as np
 
 class Cap3D(nn.Module):
     def __init__(self):
@@ -12,7 +13,7 @@ class Cap3D(nn.Module):
         # self.PrimaryCap = CapsuleLayer(1, 16, "conv", k=5, s=1, t_1=2, z_1=16, routing=1)
 
         self.DownStep_1 = nn.Sequential( # 1/2
-            CapsuleLayer(1, 16, "conv", k=5, s=2, t_1=2, z_1=16, routing=1),
+            CapsuleLayer(1, 16, "conv", k=5, s=2, t_1=2, z_1=16, routing=1),# self.PrimaryCap
             CapsuleLayer(2, 16, "conv", k=5, s=1, t_1=4, z_1=16, routing=3),
         )
 
@@ -34,6 +35,23 @@ class Cap3D(nn.Module):
 
         self.TransConv_3 = CapsuleLayer(3, 16, "conv", k=5, s=1, t_1=2, z_1=16, routing=3)
 
+        # Decoder network
+        # add the reconstruction net
+        self.ReconsNet_1 = nn.Sequential(
+            nn.Conv2d(in_channels=16, out_channels=64, kernel_size=1, stride=1,  bias=False),
+            nn.LeakyReLU(),
+            # nn.Conv2d(in_channels=64, out_channels=128, kernel_size=1, stride=1, bias=False),
+            # nn.LeakyReLU(),
+            nn.Conv2d(in_channels=64, out_channels=1, kernel_size=1, stride=1, bias=False),
+            nn.Sigmoid(),
+        )
+
+        self.ReconsNet_2 = nn.Sequential(
+            nn.Conv2d(in_channels=16, out_channels=64, kernel_size=1, stride=1, bias=False),
+            nn.LeakyReLU(),
+            nn.Conv2d(in_channels=64, out_channels=1, kernel_size=1, stride=1,  bias=False),
+            nn.Sigmoid()
+        )
 
     def forward(self,x):
         x = self.conv_1(x)
@@ -60,19 +78,21 @@ class Cap3D(nn.Module):
         x = self.UpConv_3(x) # [N,2,16,H,W]
         x = torch.cat((x,skip_1),1) # [N,3,16,H,W]
         x = self.TransConv_3(x) # [N,2,16,H,W]
-        print(x.shape)
 
         feature_map_1 = x[:, 0, :, :, :]
         feature_map_2 = x[:, 1, :, :, :]
-        feature_map_1 = self.compute_vector_length(feature_map_1).squeeze(1)
-        feature_map_2 = self.compute_vector_length(feature_map_2).squeeze(1)
-        return (feature_map_1,feature_map_2)
 
-    def compute_vector_length(self, x):
-        out = (x.pow(2)).sum(1, True)+1e-9
-        out=out.sqrt()
-        return out
+        # centroid_map = self.compute_vector_length(feature_map_1)
+        centroid_map = self.ReconsNet_1(feature_map_1)
+        rendering_3D_map = self.ReconsNet_2(feature_map_2)
 
+        return (centroid_map,rendering_3D_map)
+
+
+    # def compute_vector_length(self, x):
+    #     out = (x.pow(2)).sum(1, True)+1e-9
+    #     out = out.sqrt()
+    #     return out
 
 
 def test():
@@ -90,18 +110,25 @@ def test():
     c1 = b1.sum()
     print('c1',c1)
     c1.backward()
+
+    cnt = 0
     for k,v in model.named_parameters():
-        print(v.grad,k)
-        break
-    # from tensorboardX import SummaryWriter
-    # with SummaryWriter(comment='LeNet') as w:
-    #     w.add_graph(model, a)
-    # print(b1.shape)
-    # print(b1)
-# test()
+        if k == "LabelNet.0.weight" or k == "ReconsNet_1.4.weight":
+            continue
+        for param in v:
+            _shape = np.array(param.shape)
+            assert _shape.shape
+            cnt += _shape.prod()
+    print("total params number: %d" % cnt)
 
-
-def compute_vector_length( x):
+def compute_vector_length(x):
     out = (x.pow(2)).sum(1, True)+1e-9
     out.sqrt_()
     return out
+
+
+if __name__ == "__main__":
+    from torchsummary import summary
+    model = Cap3D()
+    pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    # summary(model,input_size)

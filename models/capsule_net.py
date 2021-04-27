@@ -9,16 +9,18 @@ class SegCaps(nn.Module):
         super().__init__()
         self.conv_1 = nn.Sequential(
             nn.Conv2d(3, 16, 5, 1, padding=2,bias=False),
-
         )
+
         self.step_1 = nn.Sequential(  # 1/2
             CapsuleLayer(1, 16, "conv", k=5, s=2, t_1=2, z_1=16, routing=1),
             CapsuleLayer(2, 16, "conv", k=5, s=1, t_1=4, z_1=16, routing=3),
         )
+
         self.step_2 = nn.Sequential(  # 1/4
             CapsuleLayer(4, 16, "conv", k=5, s=2, t_1=4, z_1=32, routing=3),
             CapsuleLayer(4, 32, "conv", k=5, s=1, t_1=8, z_1=32, routing=3)
         )
+
         self.step_3 = nn.Sequential(  # 1/8
             CapsuleLayer(8, 32, "conv", k=5, s=2, t_1=8, z_1=64, routing=3),
             CapsuleLayer(8, 64, "conv", k=5, s=1, t_1=8, z_1=32, routing=3)
@@ -31,9 +33,10 @@ class SegCaps(nn.Module):
         self.step_7 = CapsuleLayer(8, 16, "conv", k=5, s=1, t_1=4, z_1=16, routing=3)
         self.step_8 = CapsuleLayer(4, 16, "deconv", k=5, s=2, t_1=2, z_1=16, routing=3)
         self.step_10 = CapsuleLayer(3, 16, "conv", k=5, s=1, t_1=1, z_1=16, routing=3)
-        self.conv_2 = nn.Sequential(
-            nn.Conv2d(16, 1, 5, 1, padding=2),
-        )
+        # self.conv_2 = nn.Sequential(
+        #     nn.Conv2d(16, 1, 5, 1, padding=2),
+        # )
+
     def forward(self, x):
         x = self.conv_1(x)
         x.unsqueeze_(1)
@@ -66,6 +69,7 @@ class SegCaps(nn.Module):
         x.squeeze_(1)
         v_lens = self.compute_vector_length(x)
         v_lens=v_lens.squeeze(1)
+
         return v_lens
     def compute_vector_length(self, x):
         out = (x.pow(2)).sum(1, True)+1e-9

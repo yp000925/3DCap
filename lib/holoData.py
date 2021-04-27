@@ -1,7 +1,7 @@
 from __future__ import print_function, division
 import sys
 import os
-import torch
+import torch,torchvision
 import numpy as np
 import random
 import csv
@@ -46,19 +46,18 @@ class holoData(Dataset):
 
     def read_img(self,img_name):
         img = Image.open(img_name)
-        img = np.array(img).astype(np.float32)
-        return img/255.0
+        # img = np.array(img).astype(np.float32)
+        img = torchvision.transforms.ToTensor()(img)
+        return img
 
     def __len__(self):
         return len(self.file)
-
-
 
 if __name__ == "__main__":
     root_dir = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/data_holo'
     file_name = 'train.csv'
     dataset = holoData(root_dir,file_name)
-    dataloader = torch.utils.data.DataLoader(dataset,batch_size=1,shuffle=False,num_workers=1)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=5, shuffle=False, num_workers=1)
     idx = 0
     for data in dataloader:
         img, size_projection, xycentre, xy_mask = data

@@ -12,7 +12,7 @@ from torch.utils.data.sampler import Sampler
 import pandas as pd
 from PIL import Image
 
-class myDataloader(Dataset):
+class myDataSet(Dataset):
     """
     Dataset for 3D particle detection using capsule net
     """
@@ -120,7 +120,7 @@ class myDataloader(Dataset):
 if __name__ == "__main__":
     root_dir ='/Users/zhangyunping/PycharmProjects/Holo_synthetic/data_holo'
     file_path = 'check.csv'
-    dataset = myDataloader(root_dir,file_path)
+    dataset = myDataSet(root_dir, file_path)
     # img = Image.open("/Users/zhangyunping/PycharmProjects/Holo_synthetic/data_holo/hologram/0.jpg")
     # param = dataloader.load_param(root_dir + '/param/0.csv')
     # img = dataloader.read_img(root_dir + '/hologram/0.jpg')

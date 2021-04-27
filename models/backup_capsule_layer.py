@@ -50,14 +50,16 @@ class CapsuleLayer(nn.Module):
             W_1 = u_hat_t.shape[3]
             u_hat_t = u_hat_t.reshape(N, t_1,z_1,H_1, W_1).transpose_(1,3).transpose_(2,4)
             u_hat_t_list.append(u_hat_t)    #[N,H_1,W_1,t_1,z_1]
-        v=self.update_routing(u_hat_t_list,k,N,H_1,W_1,t_0,t_1,routing)
+        v = self.update_routing(u_hat_t_list,k,N,H_1,W_1,t_0,t_1,routing)
         return v
+
     def update_routing(self,u_hat_t_list, k, N, H_1, W_1, t_0, t_1, routing):
         if torch.cuda.is_available():
             one_kernel = torch.ones(1, t_1, k, k).cuda()  # 不需要学习
             b = torch.zeros(N, H_1, W_1, t_0, t_1).cuda()  # 不需要学习
         else:
             one_kernel = torch.ones(1, t_1, k, k) # 不需要学习
+            # print(one_kernel.requires_grad)
             b = torch.zeros(N, H_1, W_1, t_0, t_1) # 不需要学习
 
         b_t_list = [b_t.squeeze(3) for b_t in b.split(1, 3)]
@@ -98,6 +100,7 @@ class CapsuleLayer(nn.Module):
         v.transpose_(1, 3).transpose_(2, 4)
         # print(v.grad)
         return v
+
     def squash(self, p):
         p_norm_sq = (p * p).sum(-1, True)
         p_norm = (p_norm_sq + 1e-9).sqrt()
