@@ -61,4 +61,4 @@ if __name__ == "__main__":
     idx = 0
     for data in dataloader:
         img, size_projection, xycentre, xy_mask = data
-        break
+

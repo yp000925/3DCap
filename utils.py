@@ -53,10 +53,10 @@ def mse_TV_regularization_with_mask(output, target, mask, alpha = 1e-4):
     :return:
     """
     if torch.cuda.is_available():
-        mse_loss = torch.sum(torch.pow((output.cuda()-target.cuda()),2)*mask.cuda())
+        mse_loss = torch.sum(torch.pow((output.cuda()-target.cuda()),2)*mask.cuda())/output.shape.numel()
         tv_regularizor = _tv(output.cuda())
     else:
-        mse_loss = torch.sum(torch.pow((output-target),2)*mask)
+        mse_loss = torch.sum(torch.pow((output-target),2)*mask)/output.shape.numel()
         tv_regularizor = _tv(output)
     return (1-alpha)*mse_loss+alpha*tv_regularizor
 
@@ -153,7 +153,18 @@ def log_creater(output_dir):
 
 if __name__ == "__main__":
     # a = torch.rand((2,3,4,4))
-    a = torch.zeros((2,1,512,512))
-    b = torch.rand((2,1,512,512))
-    print(mse_TV_regularization_with_mask(a,b,b))
+    # a = torch.zeros((2,1,512,512))
+    # b = torch.rand((2,1,512,512))
+    # print(mse_TV_regularization_with_mask(a,b,b))
     # print(mse_TV_regularization(a,b),depthmap_loss(a,b))
+
+
+    from lib.holoData import holoData
+    root_dir = '/Users/zhangyunping/PycharmProjects/Holo_synthetic/data_holo/data_holo/small_dataset'
+    dataset = holoData(root_dir, 'test_500.csv')
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=2, shuffle=False, num_workers=1)
+    for data in dataloader:
+        img, size_projection, _, xy_mask = data
+        b = torch.rand(size_projection.shape)
+        mse_TV_regularization_with_mask(b,size_projection,xy_mask)
+        break
